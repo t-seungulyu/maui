@@ -49,6 +49,25 @@ namespace Microsoft.Maui.DeviceTests
 			});
 		}
 
+		[Fact(DisplayName = "Swap Shell Root Page for NavigationPage")]
+		public async Task SwapShellRootPageForNavigationPage()
+		{
+			SetupBuilder();
+			var shell = await CreateShellAsync(shell =>
+			{
+				shell.CurrentItem = new ContentPage();
+			});
+
+			await CreateHandlerAndAddToWindow<IWindowHandler>(shell, async (handler) =>
+			{
+				var newPage = new ContentPage();
+				(handler.VirtualView as Window).Page = new NavigationPage(newPage);
+				await OnNavigatedToAsync(newPage);
+				await OnFrameSetToNotEmpty(newPage);
+				Assert.True(newPage.Frame.Height > 0);
+			});
+		}
+
 		[Fact(DisplayName = "FlyoutContent Renderers When FlyoutBehavior Starts As Locked")]
 		public async Task FlyoutContentRenderersWhenFlyoutBehaviorStartsAsLocked()
 		{
@@ -71,6 +90,7 @@ namespace Microsoft.Maui.DeviceTests
 			});
 		}
 
+#if !IOS
 		[Fact(DisplayName = "Flyout Starts as Open correctly")]
 		public async Task FlyoutIsPresented()
 		{
@@ -88,7 +108,7 @@ namespace Microsoft.Maui.DeviceTests
 				await CheckFlyoutState(handler, false);
 			});
 		}
-
+#endif
 
 		[Fact(DisplayName = "Back Button Visibility Changes with push/pop")]
 		public async Task BackButtonVisibilityChangesWithPushPop()
@@ -109,17 +129,47 @@ namespace Microsoft.Maui.DeviceTests
 			});
 		}
 
+
+		[Fact(DisplayName = "Pushing the Same Page Disconnects Previous Toolbar Items")]
+		public async Task PushingTheSamePageUpdatesToolbar()
+		{
+			SetupBuilder();
+			bool canExecute = false;
+			var command = new Command(() => { }, () => canExecute);
+			var pushedPage = new ContentPage()
+			{
+				ToolbarItems =
+				{
+					new ToolbarItem()
+					{
+						Command = command
+					}
+				}
+			};
+
+			var shell = await CreateShellAsync(shell =>
+			{
+				shell.CurrentItem = new ContentPage();
+			});
+
+			await CreateHandlerAndAddToWindow<ShellHandler>(shell, async (handler) =>
+			{
+				await shell.Navigation.PushAsync(pushedPage);
+				await shell.Navigation.PopAsync();
+				canExecute = true;
+				await shell.Navigation.PushAsync(pushedPage);
+				command.ChangeCanExecute();
+			});
+		}
+
 		[Fact(DisplayName = "Set Has Back Button")]
 		public async Task SetHasBackButton()
 		{
 			SetupBuilder();
 
-			var shell = await InvokeOnMainThreadAsync<Shell>(() =>
+			var shell = await CreateShellAsync(shell =>
 			{
-				return new Shell()
-				{
-					Items = { new ContentPage() }
-				};
+				shell.CurrentItem = new ContentPage();
 			});
 
 			await CreateHandlerAndAddToWindow<ShellHandler>(shell, async (handler) =>

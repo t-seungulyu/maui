@@ -7,7 +7,7 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <GenerateDependencyFile>false</GenerateDependencyFile>
     <IncludeSymbols>false</IncludeSymbols>
-    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <NoWarn>$(NoWarn);NU5128;NU5104;</NoWarn>
   </PropertyGroup>
 
   <Import Project="../Shared/LibraryPacks.targets" />
@@ -34,6 +34,7 @@
     <PackageReference Include="Microsoft.Graphics.Win2D" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetPlatformIdentifier)' == 'tizen'" >
+    <PackageReference Include="Tizen.UIExtensions.ElmSharp" />
     <PackageReference Include="Microsoft.Maui.Graphics.Skia" />
   </ItemGroup>
 
