@@ -44,7 +44,8 @@ namespace Microsoft.Maui.Handlers
 			handler.PlatformView.ItemsSource = new ItemDelegateList<string>(handler.VirtualView!);
 		}
 
-		public static void MapReload(IPickerHandler handler, IPicker picker, object? args) => Reload(handler);
+		public static void MapReload(IPickerHandler handler, IPicker picker, object? args) 
+			=> Reload(handler);
 
 		public static void MapTitle(IPickerHandler handler, IPicker picker)
 		{
@@ -82,9 +83,7 @@ namespace Microsoft.Maui.Handlers
 		public static void MapTextColor(IPickerHandler handler, IPicker picker)
 		{
 			if (handler is PickerHandler platformHandler)
-			{
 				platformHandler.PlatformView?.UpdateTextColor(picker);
-			}
 		}
 
 		public static void MapHorizontalTextAlignment(IPickerHandler handler, IPicker picker)
