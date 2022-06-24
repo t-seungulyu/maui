@@ -1,10 +1,5 @@
-﻿using Android.Content.Res;
-using Android.Graphics.Drawables;
-using Android.Runtime;
+﻿using Android.Graphics.Drawables;
 using Android.Text;
-using Android.Views;
-using Android.Views.InputMethods;
-using Android.Widget;
 using AndroidX.AppCompat.Widget;
 using AndroidX.Core.Content;
 using static Android.Views.View;
@@ -44,7 +39,7 @@ namespace Microsoft.Maui.Handlers
 		}
 
 		public static void MapBackground(IEntryHandler handler, IEntry entry) =>
-			handler.PlatformView?.UpdateBackground(entry);
+			handler.PlatformView?.UpdateBackground(entry, keepPreviousDrawable: true);
 
 		public static void MapText(IEntryHandler handler, IEntry entry) =>
 			handler.PlatformView?.UpdateText(entry);
