@@ -62,7 +62,7 @@ namespace Microsoft.Maui.DeviceTests
 
 				return true;
 
-			}, 1500);
+			}, 3500);
 
 			if (weakHandler.TryGetTarget(out THandler _))
 				Assert.True(false, $"{typeof(THandler)} failed to collect");
