@@ -36,26 +36,36 @@ namespace Microsoft.Maui.DeviceTests
 			WeakReference weakView = null;
 
 			var oldHandle = new Java.Interop.JniObjectReference();
+			Exception exc = null;
 			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
 			{
-				// PerformNoPinAction runs off the UIThread and we have to
-				// create our handlers on the main thread
-				var createHandlerTask = CreateHandlerAsync(new TStub());
+				// Because this runs on a thread if it throws an exception
+				// it will crash the whole process
+				try
+				{
+					// PerformNoPinAction runs off the UIThread and we have to
+					// create our handlers on the main thread
+					var createHandlerTask = CreateHandlerAsync(new TStub());
 
-				for (int i = 0; i < 10 && createHandlerTask.Status != TaskStatus.RanToCompletion; i++)
-					Thread.Sleep(100);
+					for (int i = 0; i < 10 && createHandlerTask.Status != TaskStatus.RanToCompletion; i++)
+						Thread.Sleep(100);
 
-				if (createHandlerTask.Status != TaskStatus.RanToCompletion)
-					return;
+					if (createHandlerTask.Status != TaskStatus.RanToCompletion)
+						return;
 
-				var handler = createHandlerTask.Result as IPlatformViewHandler;
-				oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
-				weakHandler = new WeakReference((THandler)handler);
-				weakView = new WeakReference((TStub)handler.VirtualView);
+					var handler = createHandlerTask.Result as IPlatformViewHandler;
+					oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
+					weakHandler = new WeakReference((THandler)handler);
+					weakView = new WeakReference((TStub)handler.VirtualView);
+				}
+				catch (Exception e)
+				{
+					exc = e;
+				}
 			});
 
 			if (weakView == null)
-				Assert.True(false, "Failed to Create handler");
+				Assert.True(false, $"Failed to Create handler. Exception: {exc}");
 
 			await AssertionExtensions.Wait(() =>
 			{
