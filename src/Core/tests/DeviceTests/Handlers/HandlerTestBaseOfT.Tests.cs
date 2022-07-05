@@ -40,10 +40,13 @@ namespace Microsoft.Maui.DeviceTests
 			{
 				// PerformNoPinAction runs off the UIThread and we have to
 				// create our handlers on the main thread
-				var maybe = CreateHandlerAsync(new TStub());
-				maybe.Wait();
+				var createHandlerTask = CreateHandlerAsync(new TStub());
+				Thread.Sleep(100);
 
-				var handler = maybe.Result as IPlatformViewHandler;
+				if (createHandlerTask.Status != TaskStatus.RanToCompletion)
+					throw new Exception("Failed to create handler");
+
+				var handler = createHandlerTask.Result as IPlatformViewHandler;
 				oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
 				weakHandler = new WeakReference((THandler)handler);
 				weakView = new WeakReference((TStub)handler.VirtualView);
