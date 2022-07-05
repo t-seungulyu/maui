@@ -16,7 +16,8 @@ namespace Microsoft.Maui.DeviceTests
 		// This way of testing leaks currently doesn't seem to work on WinAppSDK
 		// If you set a break point and the app breaks then the test passes?!?
 		// Not sure if you can test this type of thing with WinAppSDK or not
-#if !WINDOWS
+
+#if ANDROID
 		[Fact(DisplayName = "Handlers Deallocate When No Longer Referenced")]
 		public async Task HandlersDeallocateWhenNoLongerReferenced()
 		{
@@ -30,32 +31,78 @@ namespace Microsoft.Maui.DeviceTests
 			if (!testedTypes.Any(t => t.IsAssignableTo(typeof(THandler))))
 				return;
 
+
+			WeakReference weakHandler = null;
+			WeakReference weakView = null;
+
+			var oldHandle = new Java.Interop.JniObjectReference();
+			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
+			{
+				// PerformNoPinAction runs off the UIThread and we have to
+				// create our handlers on the main thread
+				var maybe = CreateHandlerAsync(new TStub());
+				maybe.Wait();
+
+				var handler = maybe.Result as IPlatformViewHandler;
+				oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
+				weakHandler = new WeakReference((THandler)handler);
+				weakView = new WeakReference((TStub)handler.VirtualView);
+			});
+
+			await AssertionExtensions.Wait(() =>
+			{
+				Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
+				GC.WaitForPendingFinalizers();
+				GC.WaitForPendingFinalizers();
+
+				if (Java.Interop.JniRuntime.CurrentRuntime.ValueManager.PeekValue(oldHandle) != null)
+					return false;
+
+				return true;
+			});
+
+			Assert.Null(Java.Interop.JniRuntime.CurrentRuntime.ValueManager.PeekValue(oldHandle));
+
+			if (weakHandler.Target != null || weakHandler.IsAlive)
+				Assert.True(false, $"{typeof(THandler)} failed to collect");
+
+			if (weakView.Target != null || weakView.IsAlive)
+				Assert.True(false, $"{typeof(TStub)} failed to collect");
+
+			Java.Interop.JniObjectReference.Dispose(ref oldHandle);
+		}
+
+#elif IOS
+		[Fact(DisplayName = "Handlers Deallocate When No Longer Referenced")]
+		public async Task HandlersDeallocateWhenNoLongerReferenced()
+		{
+			// Once this includes all handlers we can delete this
+			Type[] testedTypes = new[]
+			{
+				typeof(EditorHandler),
+				typeof(DatePickerHandler)
+			};
+
+			if (!testedTypes.Any(t => t.IsAssignableTo(typeof(THandler))))
+				return;
+
+
+			WeakReference weakHandler = null;
+			WeakReference weakView = null;
 			var handler = await CreateHandlerAsync(new TStub()) as IPlatformViewHandler;
-
-			WeakReference<THandler> weakHandler = new WeakReference<THandler>((THandler)handler);
-			WeakReference<TStub> weakView = new WeakReference<TStub>((TStub)handler.VirtualView);
-
+			weakHandler = new WeakReference((THandler)handler);
+			weakView = new WeakReference((TStub)handler.VirtualView);
 			handler = null;
 
 			await AssertionExtensions.Wait(() =>
 			{
-#if !IOS
-				// When running on CI this seems to give the android GC the
-				// kick it needs to actually collect the handlers.
-				// It seems the Android GC runs conservatively, if it doesn't need 
-				// to collect anything because there's no pressure to then it just doesn't
-				//
-				// WinUI same story it seems.
-				var allocateme = new byte[1024 * 1024];
-#endif
-
 				GC.Collect();
 				GC.WaitForPendingFinalizers();
 				GC.Collect();
 				GC.WaitForPendingFinalizers();
 
-				if (weakHandler.TryGetTarget(out THandler _) ||
-					weakView.TryGetTarget(out TStub _))
+				if (weakHandler.Target != null || weakHandler.IsAlive ||
+					weakView.Target != null || weakView.IsAlive)
 				{
 					return false;
 				}
@@ -64,11 +111,12 @@ namespace Microsoft.Maui.DeviceTests
 
 			}, 3500);
 
-			if (weakHandler.TryGetTarget(out THandler _))
+			if (weakHandler.Target != null || weakHandler.IsAlive)
 				Assert.True(false, $"{typeof(THandler)} failed to collect");
 
-			if (weakView.TryGetTarget(out TStub _))
+			if (weakView.Target != null || weakView.IsAlive)
 				Assert.True(false, $"{typeof(TStub)} failed to collect");
+
 		}
 #endif
 
