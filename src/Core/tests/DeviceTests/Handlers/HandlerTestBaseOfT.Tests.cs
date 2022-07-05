@@ -38,29 +38,64 @@ namespace Microsoft.Maui.DeviceTests
 			var oldHandle = new Java.Interop.JniObjectReference();
 			Exception exc = null;
 			TaskCompletionSource<bool> finished = new TaskCompletionSource<bool>();
-			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
+
+
+			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
 			{
-				// Because this runs on a thread if it throws an exception
-				// it will crash the whole process
-				try
+				Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
 				{
-					var handler = await CreateHandlerAsync(new TStub()) as IPlatformViewHandler;
-					oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
-					weakHandler = new WeakReference((THandler)handler);
-					weakView = new WeakReference((TStub)handler.VirtualView);
-				}
-				catch (Exception e)
-				{
-					exc = e;
-					finished.SetException(e);
-				}
-				finally
-				{
-					finished.SetResult(true);
-				}
+					// Because this runs on a thread if it throws an exception
+					// it will crash the whole process
+					try
+					{
+						var handler = await CreateHandlerAsync(new TStub()) as IPlatformViewHandler;
+						oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
+						weakHandler = new WeakReference((THandler)handler);
+						weakView = new WeakReference((TStub)handler.VirtualView);
+						GC.KeepAlive(handler);
+						GC.KeepAlive(handler.PlatformView);
+					}
+					catch (Exception e)
+					{
+						exc = e;
+						finished.SetException(e);
+					}
+				});
+
+				// Make this better
+				Thread.Sleep(5000);
+				Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
+				finished.TrySetResult(true);
 			});
 
-			await finished.Task.WaitAsync(TimeSpan.FromSeconds(2));
+			Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
+			//GC.WaitForPendingFinalizers();
+
+
+
+			//Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
+			//{
+			//	// Because this runs on a thread if it throws an exception
+			//	// it will crash the whole process
+			//	try
+			//	{
+			//		var handler = await CreateHandlerAsync(new TStub()) as IPlatformViewHandler;
+			//		oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
+			//		weakHandler = new WeakReference((THandler)handler);
+			//		weakView = new WeakReference((TStub)handler.VirtualView);
+			//	}
+			//	catch (Exception e)
+			//	{
+			//		exc = e;
+			//		finished.SetException(e);
+			//	}
+			//	finally
+			//	{
+			//		finished.SetResult(true);
+			//	}
+			//});
+
+			await finished.Task.WaitAsync(TimeSpan.FromSeconds(20));
 
 			if (weakView == null)
 				Assert.True(false, $"Failed to Create handler. Exception: {exc}");
@@ -70,6 +105,13 @@ namespace Microsoft.Maui.DeviceTests
 				Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
 				GC.WaitForPendingFinalizers();
 				GC.WaitForPendingFinalizers();
+
+				_ = InvokeOnMainThreadAsync(() =>
+				{
+					Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
+					GC.WaitForPendingFinalizers();
+					GC.WaitForPendingFinalizers();
+				});
 
 				if (Java.Interop.JniRuntime.CurrentRuntime.ValueManager.PeekValue(oldHandle) != null)
 					return false;
