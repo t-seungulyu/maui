@@ -39,6 +39,7 @@ namespace Microsoft.Maui.DeviceTests
 			Exception exc = null;
 			TaskCompletionSource<bool> finished = new TaskCompletionSource<bool>();
 
+			Android.Util.Log.Info($"{typeof(THandler)}", $"{typeof(THandler)}");
 
 			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
 			{
@@ -58,13 +59,16 @@ namespace Microsoft.Maui.DeviceTests
 					catch (Exception e)
 					{
 						exc = e;
-						finished.SetException(e);
+
+						if (!finished.TrySetException(e))
+							throw;
 					}
 				});
 
 				// Make this better
-				Thread.Sleep(5000);
+				Thread.Sleep(10000);
 				Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
+
 				finished.TrySetResult(true);
 			});
 
@@ -95,7 +99,7 @@ namespace Microsoft.Maui.DeviceTests
 			//	}
 			//});
 
-			await finished.Task.WaitAsync(TimeSpan.FromSeconds(20));
+			await finished.Task.WaitAsync(TimeSpan.FromSeconds(30));
 
 			if (weakView == null)
 				Assert.True(false, $"Failed to Create handler. Exception: {exc}");
