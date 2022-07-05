@@ -37,23 +37,14 @@ namespace Microsoft.Maui.DeviceTests
 
 			var oldHandle = new Java.Interop.JniObjectReference();
 			Exception exc = null;
-			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
+			TaskCompletionSource<bool> finished = new TaskCompletionSource<bool>();
+			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
 			{
 				// Because this runs on a thread if it throws an exception
 				// it will crash the whole process
 				try
 				{
-					// PerformNoPinAction runs off the UIThread and we have to
-					// create our handlers on the main thread
-					var createHandlerTask = CreateHandlerAsync(new TStub());
-
-					for (int i = 0; i < 10 && createHandlerTask.Status != TaskStatus.RanToCompletion; i++)
-						Thread.Sleep(100);
-
-					if (createHandlerTask.Status != TaskStatus.RanToCompletion)
-						return;
-
-					var handler = createHandlerTask.Result as IPlatformViewHandler;
+					var handler = await CreateHandlerAsync(new TStub()) as IPlatformViewHandler;
 					oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
 					weakHandler = new WeakReference((THandler)handler);
 					weakView = new WeakReference((TStub)handler.VirtualView);
@@ -61,8 +52,15 @@ namespace Microsoft.Maui.DeviceTests
 				catch (Exception e)
 				{
 					exc = e;
+					finished.SetException(e);
+				}
+				finally
+				{
+					finished.SetResult(true);
 				}
 			});
+
+			await finished.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
 			if (weakView == null)
 				Assert.True(false, $"Failed to Create handler. Exception: {exc}");
