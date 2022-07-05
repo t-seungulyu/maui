@@ -41,7 +41,6 @@ namespace Microsoft.Maui.DeviceTests
 				// PerformNoPinAction runs off the UIThread and we have to
 				// create our handlers on the main thread
 				var createHandlerTask = CreateHandlerAsync(new TStub());
-				createHandlerTask.Start();
 
 				for (int i = 0; i < 10 && createHandlerTask.Status != TaskStatus.RanToCompletion; i++)
 					Thread.Sleep(100);
