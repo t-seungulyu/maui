@@ -41,7 +41,7 @@ namespace Microsoft.Maui.DeviceTests
 
 			Android.Util.Log.Info($"{typeof(THandler)}", $"{typeof(THandler)}");
 
-			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
+			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
 			{
 				Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
 				{
@@ -60,15 +60,24 @@ namespace Microsoft.Maui.DeviceTests
 					{
 						exc = e;
 
-						if (!finished.TrySetException(e))
-							throw;
+						//if (!finished.TrySetException(e))
+						//	throw;
 					}
 				});
 
 				// Make this better
-				Thread.Sleep(10000);
+				await Task.Delay(5000);
 				Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
+			});
 
+			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
+			{
+				Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
+				{
+					Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
+				});
+
+				Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
 				finished.TrySetResult(true);
 			});
 
