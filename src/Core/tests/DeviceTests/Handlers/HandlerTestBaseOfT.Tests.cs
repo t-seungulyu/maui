@@ -41,47 +41,61 @@ namespace Microsoft.Maui.DeviceTests
 
 			Android.Util.Log.Info($"{typeof(THandler)}", $"{typeof(THandler)}");
 
-			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
-			{
-				Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
-				{
-					// Because this runs on a thread if it throws an exception
-					// it will crash the whole process
-					try
-					{
-						var handler = await CreateHandlerAsync(new TStub()) as IPlatformViewHandler;
-						oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
-						weakHandler = new WeakReference((THandler)handler);
-						weakView = new WeakReference((TStub)handler.VirtualView);
-						GC.KeepAlive(handler);
-						GC.KeepAlive(handler.PlatformView);
-					}
-					catch (Exception e)
-					{
-						exc = e;
-
-						//if (!finished.TrySetException(e))
-						//	throw;
-					}
-				});
-
-				// Make this better
-				await Task.Delay(5000);
-				Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
-			});
-
-			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
-			{
-				Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
-				{
-					Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
+			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() => {
+				Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() => {
+					var handler = CreateHandler(new TStub()) as IPlatformViewHandler;
+					oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
+					weakHandler = new WeakReference((THandler)handler);
+					weakView = new WeakReference((TStub)handler.VirtualView);
+					GC.KeepAlive(handler);
+					GC.KeepAlive(handler.PlatformView);
 				});
 
 				Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
-				finished.TrySetResult(true);
+				finished.SetResult(true);
 			});
 
-			Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
+			//Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
+			//{
+			//	Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
+			//	{
+			//		// Because this runs on a thread if it throws an exception
+			//		// it will crash the whole process
+			//		try
+			//		{
+			//			var handler = await CreateHandlerAsync(new TStub()) as IPlatformViewHandler;
+			//			oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
+			//			weakHandler = new WeakReference((THandler)handler);
+			//			weakView = new WeakReference((TStub)handler.VirtualView);
+			//			GC.KeepAlive(handler);
+			//			GC.KeepAlive(handler.PlatformView);
+			//		}
+			//		catch (Exception e)
+			//		{
+			//			exc = e;
+
+			//			//if (!finished.TrySetException(e))
+			//			//	throw;
+			//		}
+			//	});
+
+			//	// Make this better
+			//	await Task.Delay(5000);
+			//	Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
+			//});
+
+			//Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
+			//{
+			//	Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
+			//	{
+			//		Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
+			//	});
+
+			//	Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
+			//	finished.TrySetResult(true);
+			//});
+
+			//Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
 			//GC.WaitForPendingFinalizers();
 
 
