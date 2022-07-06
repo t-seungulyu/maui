@@ -66,73 +66,6 @@ namespace Microsoft.Maui.DeviceTests
 				finished.SetResult(true);
 			});
 
-			//Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
-			//{
-			//	Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
-			//	{
-			//		// Because this runs on a thread if it throws an exception
-			//		// it will crash the whole process
-			//		try
-			//		{
-			//			var handler = await CreateHandlerAsync(new TStub()) as IPlatformViewHandler;
-			//			oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
-			//			weakHandler = new WeakReference((THandler)handler);
-			//			weakView = new WeakReference((TStub)handler.VirtualView);
-			//			GC.KeepAlive(handler);
-			//			GC.KeepAlive(handler.PlatformView);
-			//		}
-			//		catch (Exception e)
-			//		{
-			//			exc = e;
-
-			//			//if (!finished.TrySetException(e))
-			//			//	throw;
-			//		}
-			//	});
-
-			//	// Make this better
-			//	await Task.Delay(5000);
-			//	Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
-			//});
-
-			//Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
-			//{
-			//	Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() =>
-			//	{
-			//		Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
-			//	});
-
-			//	Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
-			//	finished.TrySetResult(true);
-			//});
-
-			//Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
-			//GC.WaitForPendingFinalizers();
-
-
-
-			//Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
-			//{
-			//	// Because this runs on a thread if it throws an exception
-			//	// it will crash the whole process
-			//	try
-			//	{
-			//		var handler = await CreateHandlerAsync(new TStub()) as IPlatformViewHandler;
-			//		oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
-			//		weakHandler = new WeakReference((THandler)handler);
-			//		weakView = new WeakReference((TStub)handler.VirtualView);
-			//	}
-			//	catch (Exception e)
-			//	{
-			//		exc = e;
-			//		finished.SetException(e);
-			//	}
-			//	finally
-			//	{
-			//		finished.SetResult(true);
-			//	}
-			//});
-
 			await finished.Task.WaitAsync(TimeSpan.FromSeconds(30));
 
 			if (weakView == null)
@@ -143,13 +76,6 @@ namespace Microsoft.Maui.DeviceTests
 				Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
 				GC.WaitForPendingFinalizers();
 				GC.WaitForPendingFinalizers();
-
-				_ = InvokeOnMainThreadAsync(() =>
-				{
-					Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
-					GC.WaitForPendingFinalizers();
-					GC.WaitForPendingFinalizers();
-				});
 
 				if (Java.Interop.JniRuntime.CurrentRuntime.ValueManager.PeekValue(oldHandle) != null)
 					return false;
