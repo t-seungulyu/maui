@@ -55,6 +55,9 @@ namespace Microsoft.Maui.DeviceTests
 						weakView = new WeakReference((TStub)handler.VirtualView);
 						GC.KeepAlive(handler);
 						GC.KeepAlive(handler.PlatformView);
+
+						if (handler is DatePickerHandler dph)
+							GC.KeepAlive(dph.DatePickerDialog);
 					}
 					finally
 					{
