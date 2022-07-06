@@ -38,19 +38,30 @@ namespace Microsoft.Maui.DeviceTests
 			var oldHandle = new Java.Interop.JniObjectReference();
 			Exception exc = null;
 			TaskCompletionSource<bool> finished = new TaskCompletionSource<bool>();
+			TaskCompletionSource<bool> innerLoopFinished = new TaskCompletionSource<bool>();
 
 			Android.Util.Log.Info($"{typeof(THandler)}", $"{typeof(THandler)}");
 
-			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() => {
-				Java.InteropTests.FinalizerHelpers.PerformNoPinAction(() => {
-					var handler = CreateHandler(new TStub()) as IPlatformViewHandler;
-					oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
-					weakHandler = new WeakReference((THandler)handler);
-					weakView = new WeakReference((TStub)handler.VirtualView);
-					GC.KeepAlive(handler);
-					GC.KeepAlive(handler.PlatformView);
+			Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
+			{
+				Java.InteropTests.FinalizerHelpers.PerformNoPinAction(async () =>
+				{
+					try
+					{
+						var handler = await CreateHandlerAsync(new TStub()) as IPlatformViewHandler;
+						oldHandle = handler.PlatformView.PeerReference.NewWeakGlobalRef();
+						weakHandler = new WeakReference((THandler)handler);
+						weakView = new WeakReference((TStub)handler.VirtualView);
+						GC.KeepAlive(handler);
+						GC.KeepAlive(handler.PlatformView);
+					}
+					finally
+					{
+						innerLoopFinished.SetResult(true);
+					}
 				});
 
+				await innerLoopFinished.Task.WaitAsync(TimeSpan.FromSeconds(10));
 				Java.Interop.JniEnvironment.Runtime.ValueManager.CollectPeers();
 				finished.SetResult(true);
 			});
