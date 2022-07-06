@@ -10,6 +10,7 @@ using Xunit;
 
 namespace Microsoft.Maui.DeviceTests
 {
+	[Collection("Memory test")]
 	public abstract partial class HandlerTestBase<THandler, TStub>
 	{
 

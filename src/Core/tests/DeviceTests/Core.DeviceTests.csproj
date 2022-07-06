@@ -54,6 +54,10 @@
     <Compile Include="Handlers\View\*.cs" />
     <Compile Include="Handlers\Window\*.cs" />
   </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.Contains('-android'))">
+    <Compile Remove="Handlers\*\*.cs" />
+    <Compile Include="Handlers\DatePicker\*.cs" />
+  </ItemGroup>
   <ItemGroup Condition="!$(TargetFramework.Contains('-android'))">
     <Compile Remove="**\*.Android.cs" />
   </ItemGroup>
