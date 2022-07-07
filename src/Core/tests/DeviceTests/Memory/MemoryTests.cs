@@ -17,6 +17,13 @@ using Xunit.Sdk;
 
 namespace Microsoft.Maui.Handlers.Memory
 {
+	/// <summary>
+	/// Trying to allocate and then rely on the GC to collect within the same test didn't really work.
+	/// My theory here is that it's a threading issue. When a test is running XUnit is holding a thread for it.
+	/// For example, if you call Thread.Sleep it will block the entire test run from moving forward whereas locally
+	/// it's able to still run things in parallel. So, I broke the allocate and check allocate into two steps
+	/// which seems to make Android and WinUI happier. 
+	/// </summary>
 	[TestCaseOrderer("Microsoft.Maui.Handlers.Memory.MemoryTestOrdering", "Microsoft.Maui.Core.DeviceTests")]
 	public class MemoryTests : HandlerTestBase, IClassFixture<MemoryTestFixture>
 	{
@@ -34,6 +41,11 @@ namespace Microsoft.Maui.Handlers.Memory
 			WeakReference weakHandler = new WeakReference(handler);
 			_fixture.AddReferences(data.HandlerType, (weakHandler, new WeakReference(handler.VirtualView)));
 			handler = null;
+
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
 		}
 
 		[Theory]
