@@ -26,7 +26,7 @@ namespace Microsoft.Maui.Handlers.Memory
 			if (weakHandler.Target != null ||
 				weakHandler.IsAlive ||
 				weakView.Target != null ||
-				weakHandler.IsAlive)
+				weakView.IsAlive)
 			{
 				return true;
 			}
