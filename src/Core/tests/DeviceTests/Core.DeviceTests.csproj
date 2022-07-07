@@ -42,7 +42,6 @@
   <!-- include/exclude the *.<platform>.cs files -->
   <ItemGroup>
     <None Include="@(Compile)" />
-    <None Include="MemoryTests.Android.cs" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.Contains('-windows'))">
     <Compile Remove="Handlers\*\*.cs" />
@@ -54,15 +53,6 @@
     <Compile Include="Handlers\Switch\*.cs" />
     <Compile Include="Handlers\View\*.cs" />
     <Compile Include="Handlers\Window\*.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="$(TargetFramework.Contains('-android'))">
-    <Compile Remove="Handlers\*\*.cs" />
-    <Compile Remove="Services\*\*.cs" />
-    <Compile Remove="Services\*\*.Android.cs" />
-    <Compile Remove="Services\*.Android.cs" />
-    <Compile Remove="Services\*.cs" />
-    <Compile Remove="*.Android.cs" />
-    <Compile Include="MemoryTests.Android.cs" />
   </ItemGroup>
   <ItemGroup Condition="!$(TargetFramework.Contains('-android'))">
     <Compile Remove="**\*.Android.cs" />
